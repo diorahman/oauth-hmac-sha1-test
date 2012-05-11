@@ -6,14 +6,14 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    QString consumerKey("W3f50lSJiI00CDVg6UwhxQ");
-    QString consumerSecret("CHPWgrNu1wanwvSXax3b7FQarXBgVeZXUFysD4yZKXg");
+    QString consumerKey("consumerkey");
+    QString consumerSecret("consumersecret");
 
     OAuth * o = new OAuth(
                     consumerKey,
                     consumerSecret,
-                    "222985359-doXx8xsjENAgGsFBBTt9JjHCxuoXNb45Kd1RnGoh",
-                    "pjm6uDyALRIXsyN0ZHQo3Rz5R7UzXd932O8Lq20aE",
+                    "oauthToken",
+                    "oauthTokenSecret",
                     "",
                     qApp);
 
