@@ -62,7 +62,7 @@ void OAuthPrivate::secureReply()
         DEBUG() << data;
 
         switch(reply->request().attribute(QNetworkRequest::User).toInt()){
-            case OAuthPrivate::RequestToken:
+            case OAuthPrivate::RequestToken: {ParamsList p = parseOAuthReply(data); emit q->requestTokenReceived(p.at(0).second, p.at(1).second, data);} break;
             case OAuthPrivate::AccessToken : {ParamsList p = parseOAuthReply(data); emit q->accesTokenReceived(p.at(0).second, p.at(1).second, data);} break;
             default: emit q->resourceReceived(data); break;
         }
