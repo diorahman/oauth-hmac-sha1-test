@@ -55,11 +55,12 @@ void OAuthPrivate::secureReply()
 
     Q_Q(OAuth);
 
+    QString data = reply->readAll();
+
+    DEBUG() << data;
+    DEBUG() << reply->errorString();
+
     if(reply->error() == QNetworkReply::NoError){
-
-        QString data = reply->readAll();
-
-        DEBUG() << data;
 
         switch(reply->request().attribute(QNetworkRequest::User).toInt()){
             case OAuthPrivate::RequestToken: {ParamsList p = parseOAuthReply(data); emit q->requestTokenReceived(p.at(0).second, p.at(1).second, data);} break;
@@ -87,7 +88,6 @@ void OAuthPrivate::secureRequest(QNetworkRequest * request, const QString &metho
             request->setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         }else{
             body = params.at(0).second;
-
         }
 
         request->setHeader(QNetworkRequest::ContentLengthHeader, body.length());
@@ -136,19 +136,25 @@ ParamsList OAuthPrivate::prepareAuthHeaders(const ParamsList &params)
     oauthParams.append(Param("oauth_nonce", nonce(32).toAscii()));
     oauthParams.append(Param("oauth_signature_method", "HMAC-SHA1"));
     oauthParams.append(Param("oauth_timestamp", (QString("%1").arg(timestamp())).toAscii()));
+
     if(!oauthToken.isEmpty()){
         oauthParams.append(Param("oauth_token", oauthToken.toAscii()));
     }
 
-    for(int i = 0; i < params.length(); i++){
-        if(isOAuthParam(params.at(i).first)){
-            oauthParams.append(params.at(i));
-        }
-    }
-
     oauthParams.append(Param("oauth_version", "1.0"));
 
-    return oauthParams;
+    for(int i = 0; i < params.length(); i++){
+        oauthParams.append(params.at(i));
+    }
+
+    // sort
+    QMap<QString, Param> sorted;
+
+    for(int j = 0; j < oauthParams.length(); j++){
+        sorted.insert(oauthParams.at(j).first, oauthParams.at(j));
+    }
+
+    return sorted.values();
 }
 
 QString OAuthPrivate::authHeaders(const QString & httpMethod, const QString & strUrl, const ParamsList & oauthParams)
@@ -160,10 +166,15 @@ QString OAuthPrivate::authHeaders(const QString & httpMethod, const QString & st
 
     for(int i = 0; i < oauthParams.length(); i++){
         params += encode(oauthParams.at(i).first) + "=" + encode(oauthParams.at(i).second) + "&";
-        authHeader += encode(oauthParams.at(i).first) + "=\"" + encode(oauthParams.at(i).second) + "\",";
+
+        if(isOAuthParam(oauthParams.at(i).first))
+            authHeader += encode(oauthParams.at(i).first) + "=\"" + encode(oauthParams.at(i).second) + "\",";
     }
 
     params = params.mid(0, params.length() - 1);
+
+    DEBUG() << params;
+
     authHeader += QString("oauth_signature=\"%1\"").arg(encode(signature(signatureBase(method, url, params))));
 
     return authHeader;
@@ -173,9 +184,6 @@ QString OAuthPrivate::signatureBase(const QString & method, const QString & url,
 {
     QString u = encode(normalizeUrl(url));
     QString p = encode(params);
-
-    DEBUG() << p;
-
     return method.toUpper() + "&" + u + "&" + p;
 }
 
